@@ -1,19 +1,59 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
-
+import axios from "axios";
 import { FcGoogle } from "react-icons/fc";
 import shareVideo from "../assets/share.mp4";
 import logo from "../assets/logowhite.png";
 
-import { useGoogleLogin } from '@react-oauth/google';
+import { useGoogleLogin } from "@react-oauth/google";
 import jwt_decode from "jwt-decode";
 
-const Login = () => {
+import {client} from '../client';
 
+const Login = () => {
+  const navigate = useNavigate();
+  const [user, setUser] = useState([]);
+  const [profile, setProfile] = useState([]);
   const login = useGoogleLogin({
-      onSuccess: tokenResponse => console.log(tokenResponse),
+    onSuccess: (codeResponse) => {setUser(codeResponse)
+      
+    },
+    onError: (error) => console.log("Login Failed:", error),
   });
+
+  useEffect(() => {
+    if (user) {
+      axios
+        .get(
+          `http://www.googleapis.com/oauth2/v1/userinfo?access_token=${user.access_token}`,
+          {
+            headers: {
+              Authorization: `Bearer ${user.access_token}`,
+              Accept: "application/json",
+            },
+          }
+        )
+        .then((res) => {
+          console.log(user);
+          setProfile(res.data);
+          console.log(res.data);
+          localStorage.setItem('user',JSON.stringify(res.data));
+          const {name, id, picture} = res.data;
+          const doc ={
+            _id : id,
+            _type : 'user',
+            userName : name,
+            image : picture,
+          }
+
+          client.createIfNotExists(doc).then(()=>{
+            navigate('/',{replace:true})
+          })
+        })
+        .catch((err) => console.log(err));
+    }
+  }, [user]);
 
   return (
     <div className="flex justify-start items-center flex-col h-screen">
@@ -31,14 +71,16 @@ const Login = () => {
           <div className="p-5">
             <img src={logo} width="130px" alt="logo" />
           </div>
+          
           <div className="shadow-2xl">
-            <button type='button' className="bg-mainColor flex justify-center items-center p-3 rounded-lg cursor-pointer outline-none" 
-            onClick={()=>login()}
-            
+            <button
+              type="button"
+              className="bg-mainColor flex justify-center items-center p-3 rounded-lg cursor-pointer outline-none"
+              onClick={() => login()}
             >
-              <FcGoogle className="mr-4" />Sign in with Google
-              </button>
-              
+              <FcGoogle className="mr-4" />
+              Sign in with Google
+            </button>
           </div>
         </div>
       </div>
