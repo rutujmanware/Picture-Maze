@@ -7,7 +7,7 @@ import shareVideo from "../assets/share.mp4";
 import logo from "../assets/logowhite.png";
 
 import { useGoogleLogin } from "@react-oauth/google";
-import jwt_decode from "jwt-decode";
+
 
 import {client} from '../client';
 
@@ -17,7 +17,7 @@ const Login = () => {
   const [profile, setProfile] = useState([]);
   const login = useGoogleLogin({
     onSuccess: (codeResponse) => {setUser(codeResponse)
-      
+      console.log(codeResponse)
     },
     onError: (error) => console.log("Login Failed:", error),
   });
@@ -48,7 +48,7 @@ const Login = () => {
           }
 
           client.createIfNotExists(doc).then(()=>{
-            navigate('/',{replace:true})
+            navigate("/",{replace:true})
           })
         })
         .catch((err) => console.log(err));
